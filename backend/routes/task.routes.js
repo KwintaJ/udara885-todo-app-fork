@@ -1,13 +1,22 @@
 import express from "express"
+import rateLimit from 'express-rate-limit';
 import { addTask, completeTask, deleteTask, getTask, getTasks, updateTask } from "../controller/task.controller.js"
 
-const router = express.Router()
+const router = express.Router();
 
-router.get( "/get-tasks", getTasks)
-router.get("/get-task/:id", getTask)
-router.post("/add-task", addTask)
-router.delete("/delete-task/:id", deleteTask)
-router.put("/complete-task/:id", completeTask)
-router.put("/update-task/:id", updateTask)
+const taskLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100,
+    message: {
+        message: "Zbyt wiele żądań z tego adresu IP, spróbuj ponownie za 15 minut."
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
 
-export default router
+router.post("/add-task", taskLimiter, addTask);
+router.delete("/delete-task/:id", taskLimiter, deleteTask);
+router.put("/complete-task/:id", taskLimiter, completeTask);
+router.put("/update-task/:id", taskLimiter, updateTask);
+
+export default router;
